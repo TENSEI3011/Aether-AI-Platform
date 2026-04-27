@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-04-27 14:45:04",
+  "llm_mode": "Gemini API",
+  "dataset_shape": [
+    100,
+    7
+  ],
+  "overall_accuracy": 97.6,
+  "components": {
+    "Code Generation": 100.0,
+    "Query Validation": 100.0,
+    "Visualization Selector": 83.3,
+    "Insight Generator": 100.0,
+    "Anomaly Detector": 100.0,
+    "Forecaster": 100.0,
+    "End-to-End Pipeline": 100.0
+  }
+}

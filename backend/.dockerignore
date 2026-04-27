@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+database.db
+datasets/
+logs/
+.venv/
+venv/
+.git/
+.cursor/
+.vscode/
+tests/__pycache__/

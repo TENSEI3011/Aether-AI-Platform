@@ -1,0 +1,63 @@
+# .gitignore — Generative AI Analysis Platform
+
+# ── Environment & Secrets (NEVER commit these) ────────────
+.env
+.env.local
+.env.production
+
+# ── Database files ────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Uploaded Datasets ─────────────────────────────────────
+datasets/
+!datasets/.gitkeep
+
+# ── Application Logs ──────────────────────────────────────
+logs/
+!logs/.gitkeep
+
+# ── Python ────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# ── Node / Frontend ───────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/build/
+.npm
+
+# ── IDE & Editor ──────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Keep MCP config but gitignore the API key inside it
+# (You should replace YOUR_NEON_API_KEY_HERE before committing)
+# Alternatively, store key via environment variable
+
+# ── Docker volumes ────────────────────────────────────────
+postgres_data/
+
+# ── IDE / Tool configs ───────────────────────────────────
+.cursor/
+.gemini/
+.pytest_cache/
+pyrightconfig.json
+
+# ── Large doc files (optional — remove if you want them)
+*.docx

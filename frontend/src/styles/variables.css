@@ -1,0 +1,160 @@
+/* ============================================================
+   CSS Variables — "Aether Flow" Design System (by Stitch MCP)
+   ============================================================
+   Premium dark-mode analytics interface inspired by the
+   "Ethereal Intelligence" design philosophy.
+   Deep void-space backgrounds, glassmorphism surfaces,
+   purple-to-pink accent gradients, and editorial typography.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap');
+
+:root {
+  /* ── Aether Flow — Core Surfaces ────────────────────── */
+  --color-bg-primary:        #0E0E13;  /* surface-container-lowest */
+  --color-bg-secondary:      #1B1B20;  /* surface-container-low */
+  --color-bg-card:           #1F1F25;  /* surface-container */
+  --color-bg-card-high:      #2A292F;  /* surface-container-high */
+  --color-bg-card-highest:   #35343A;  /* surface-container-highest */
+  --color-bg-input:          #0E0E13;  /* surface-container-lowest */
+  --color-bg-hover:          #2A292F;  /* surface-container-high */
+  --color-bg-surface:        #131318;  /* surface */
+  --color-bg-surface-bright: #39383E;  /* surface-bright */
+
+  /* ── Accent Colors ──────────────────────────────────── */
+  --color-accent:            #D2BBFF;  /* primary */
+  --color-accent-container:  #7C3AED;  /* primary-container */
+  --color-accent-hover:      #C3A6FF;  /* secondary */
+  --color-accent-glow:       rgba(124, 58, 237, 0.25);
+  --color-accent-deep:       #5A00C6;  /* on-primary-fixed-variant */
+  --color-accent-inverse:    #732EE4;  /* inverse-primary */
+
+  /* ── Secondary/Tertiary ─────────────────────────────── */
+  --color-secondary:         #D2BBFF;
+  --color-secondary-container: #523787;
+  --color-tertiary:          #FFB1C7;  /* tertiary / pink accent */
+  --color-tertiary-container: #C70F68;
+
+  /* ── Semantic Colors ────────────────────────────────── */
+  --color-success:           #10B981;
+  --color-warning:           #F59E0B;
+  --color-danger:            #EF4444;
+  --color-error:             #FFB4AB;
+  --color-error-container:   #93000A;
+  --color-info:              #3B82F6;
+
+  /* ── Text Colors ────────────────────────────────────── */
+  --color-text-primary:      #E4E1E9;  /* on-surface */
+  --color-text-secondary:    #CCC3D8;  /* on-surface-variant */
+  --color-text-muted:        #958DA1;  /* outline */
+  --color-text-on-primary:   #3F008E;  /* on-primary */
+  --color-text-on-container: #EDE0FF;  /* on-primary-container */
+
+  /* ── Borders ────────────────────────────────────────── */
+  --color-border:            rgba(74, 68, 85, 0.35);  /* outline-variant @ 35% — Ghost Border */
+  --color-border-focus:      #7C3AED;
+  --color-border-ghost:      rgba(74, 68, 85, 0.15);  /* ultra-subtle ghost border */
+
+  /* ── Gradients ──────────────────────────────────────── */
+  --gradient-primary:        linear-gradient(135deg, #7C3AED, #A855F7);
+  --gradient-hero:           linear-gradient(135deg, #7C3AED, #A855F7, #DB2777);
+  --gradient-accent:         linear-gradient(135deg, #7C3AED, #FFB1C7);
+  --gradient-card:           linear-gradient(135deg, rgba(124, 58, 237, 0.06), rgba(219, 39, 119, 0.04));
+  --gradient-kpi:            linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(168, 85, 247, 0.08));
+  --gradient-glow:           radial-gradient(ellipse at 50% 0%, rgba(124, 58, 237, 0.15), transparent 70%);
+  --gradient-orb-purple:     radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, transparent 70%);
+  --gradient-orb-pink:       radial-gradient(circle, rgba(219, 39, 119, 0.06) 0%, transparent 70%);
+
+  /* ── Typography ─────────────────────────────────────── */
+  --font-family:       'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:         'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+  --font-size-xs:      0.75rem;
+  --font-size-sm:      0.875rem;
+  --font-size-md:      1rem;
+  --font-size-lg:      1.125rem;
+  --font-size-xl:      1.5rem;
+  --font-size-2xl:     2rem;
+  --font-size-3xl:     2.5rem;
+  --font-size-4xl:     3rem;
+  --font-size-display: 3.5rem;
+
+  /* ── Spacing (Scale 3 — generous) ───────────────────── */
+  --space-xs:  0.25rem;
+  --space-sm:  0.5rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  --space-4xl: 6rem;
+
+  /* ── Borders & Radii ─────────────────────────────────── */
+  --border-radius-xs:   4px;
+  --border-radius-sm:   8px;
+  --border-radius-md:   12px;
+  --border-radius-lg:   16px;
+  --border-radius-xl:   20px;
+  --border-radius-2xl:  24px;
+  --border-radius-full: 9999px;
+
+  /* ── Shadows (Purple-tinted) ─────────────────────────── */
+  --shadow-sm:    0 2px 8px rgba(90, 0, 198, 0.06);
+  --shadow-md:    0 4px 20px rgba(90, 0, 198, 0.08);
+  --shadow-lg:    0 8px 40px rgba(90, 0, 198, 0.10);
+  --shadow-xl:    0 16px 60px rgba(90, 0, 198, 0.12);
+  --shadow-glow:  0 0 30px rgba(124, 58, 237, 0.25);
+  --shadow-glow-sm: 0 0 15px rgba(124, 58, 237, 0.15);
+  --shadow-card:  0 1px 3px rgba(0, 0, 0, 0.12), 0 0 20px rgba(124, 58, 237, 0.04);
+  --shadow-float: 0 25px 50px rgba(0, 0, 0, 0.25), 0 0 30px rgba(124, 58, 237, 0.08);
+
+  /* ── Transitions ─────────────────────────────────────── */
+  --transition-fast:   150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow:   400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ── Glass Effect ────────────────────────────────────── */
+  --glass-bg:     rgba(31, 31, 37, 0.60);
+  --glass-border: rgba(74, 68, 85, 0.20);
+  --glass-blur:   blur(20px);
+}
+
+/* ── Light Theme Override (Polished) ─────────────────────── */
+[data-theme="light"] {
+  --color-bg-primary:      #F5F3FA;
+  --color-bg-secondary:    #FFFFFF;
+  --color-bg-card:         #FFFFFF;
+  --color-bg-card-high:    #F0EDF6;
+  --color-bg-card-highest: #E8E4F0;
+  --color-bg-input:        #F0EDF6;
+  --color-bg-hover:        #E8E4F0;
+  --color-bg-surface:      #FDFBFF;
+  --color-bg-surface-bright: #FFFFFF;
+
+  --color-accent:          #7C3AED;
+  --color-accent-container: #7C3AED;
+  --color-accent-hover:    #6D28D9;
+  --color-accent-glow:     rgba(124, 58, 237, 0.10);
+
+  --color-text-primary:    #1A1625;
+  --color-text-secondary:  #44405A;
+  --color-text-muted:      #7B7394;
+
+  --color-border:          rgba(124, 58, 237, 0.12);
+  --color-border-focus:    #7C3AED;
+  --color-border-ghost:    rgba(124, 58, 237, 0.06);
+
+  --gradient-card:    linear-gradient(135deg, rgba(124, 58, 237, 0.03), rgba(219, 39, 119, 0.02));
+  --gradient-kpi:     linear-gradient(135deg, rgba(124, 58, 237, 0.06), rgba(168, 85, 247, 0.03));
+
+  --glass-bg:         rgba(255, 255, 255, 0.85);
+  --glass-border:     rgba(124, 58, 237, 0.08);
+
+  --shadow-sm:   0 1px 3px rgba(124, 58, 237, 0.04), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:   0 4px 16px rgba(124, 58, 237, 0.06), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg:   0 8px 32px rgba(124, 58, 237, 0.08), 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-card: 0 1px 4px rgba(124, 58, 237, 0.06), 0 4px 24px rgba(124, 58, 237, 0.04);
+  --shadow-glow: 0 0 30px rgba(124, 58, 237, 0.10);
+  --shadow-glow-sm: 0 0 15px rgba(124, 58, 237, 0.08);
+  --shadow-float: 0 16px 48px rgba(124, 58, 237, 0.10), 0 4px 12px rgba(0,0,0,0.06);
+}

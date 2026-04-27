@@ -1,0 +1,38 @@
+# ============================================================
+# Backend Requirements — Generative AI Analysis Platform
+# ============================================================
+
+# Web Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# Database
+sqlalchemy>=2.0.23
+psycopg2-binary>=2.9.9    # PostgreSQL driver (pre-compiled, no local Postgres install needed)
+aiosqlite>=0.19.0          # SQLite async support (local dev fallback)
+
+# Authentication
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0
+
+# Data Processing
+pandas>=2.2.0
+openpyxl>=3.1.2
+
+# File Upload
+python-multipart>=0.0.6
+
+# Environment Variables
+python-dotenv>=1.0.0
+
+# LLM — Google Gemini
+google-genai>=1.0.0
+
+# Voice — Real TTS (Phase 4)
+gTTS>=2.3.2             # Google Text-to-Speech (free, no API key needed)
+# openai-whisper>=20231117  # Uncomment for offline STT
+
+# Utilities
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
