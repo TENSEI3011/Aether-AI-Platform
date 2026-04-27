@@ -48,9 +48,18 @@ app = FastAPI(
 )
 
 # ── CORS Middleware ───────────────────────────────────────
+_allowed_origins = [
+    settings.FRONTEND_URL,
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://aether-frontend-f0tf.onrender.com",
+]
+# Remove empty strings and duplicates
+_allowed_origins = list(set(o for o in _allowed_origins if o))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "http://localhost:5173"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
