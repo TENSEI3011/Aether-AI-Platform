@@ -33,7 +33,14 @@ function Register() {
             await register(username, email, password)
             navigate('/dashboard')
         } catch (err) {
-            setError(err.response?.data?.detail || 'Registration failed')
+            const detail = err.response?.data?.detail
+            if (typeof detail === 'string') {
+                setError(detail)
+            } else if (Array.isArray(detail)) {
+                setError(detail.map(d => d.msg || JSON.stringify(d)).join(', '))
+            } else {
+                setError('Registration failed')
+            }
         } finally {
             setLoading(false)
         }

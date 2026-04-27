@@ -28,7 +28,14 @@ function Login() {
             await login(username, password)
             navigate('/dashboard')
         } catch (err) {
-            setError(err.response?.data?.detail || 'Login failed')
+            const detail = err.response?.data?.detail
+            if (typeof detail === 'string') {
+                setError(detail)
+            } else if (Array.isArray(detail)) {
+                setError(detail.map(d => d.msg || JSON.stringify(d)).join(', '))
+            } else {
+                setError('Login failed')
+            }
         } finally {
             setLoading(false)
         }
