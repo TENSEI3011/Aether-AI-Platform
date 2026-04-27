@@ -284,11 +284,13 @@ def clean_dataset(
         f"Dataset columns: {', '.join(column_names)}\n"
         f"Task: {req.instruction}\n"
         f"Write a single Pandas expression that cleans the dataframe `df` as instructed. "
-        f"The result must be assigned back to `df` or returned as a new dataframe. "
+        f"The result must be a DataFrame (not a Series or scalar). "
+        f"For fillna with mean/median, use: "
+        f"df.fillna(df.select_dtypes(include='number').mean()) "
         f"Only return the code, no explanation."
     )
 
-    llm_result = llm_engine.generate_code(req.instruction, schema_summary)
+    llm_result = llm_engine.generate_code(cleaning_prompt, schema_summary)
     generated_code = llm_result["code"]
 
     # Validate
@@ -300,23 +302,44 @@ def clean_dataset(
             "generated_code": generated_code,
         }
 
-    # Execute on a copy
-    exec_result = execute_query(df, generated_code)
-    if not exec_result["success"]:
+    # ── Execute cleaning DIRECTLY on full DataFrame (not via execute_query
+    #    which truncates to 500 rows and would destroy data on persist)
+    import pandas as _pd
+
+    before_rows = len(df)
+
+    try:
+        df_copy = df.copy()
+        exec_ns = {"df": df_copy, "pd": _pd}
+        # Try as expression first (e.g., df.fillna(...))
+        try:
+            cleaned_df = eval(generated_code, {"__builtins__": {}}, exec_ns)
+        except SyntaxError:
+            # If it's a statement (e.g., df['col'] = ...), exec it
+            exec(generated_code, {"__builtins__": {}}, exec_ns)
+            cleaned_df = exec_ns["df"]
+
+        # Ensure result is a DataFrame
+        if isinstance(cleaned_df, _pd.Series):
+            cleaned_df = cleaned_df.to_frame()
+        elif not isinstance(cleaned_df, _pd.DataFrame):
+            return {
+                "success": False,
+                "errors": ["Cleaning operation did not return a DataFrame"],
+                "generated_code": generated_code,
+            }
+    except Exception as e:
         return {
             "success": False,
-            "errors": [exec_result["error"]],
+            "errors": [f"Execution error: {str(e)}"],
             "generated_code": generated_code,
         }
 
-    before_rows = len(df)
-    after_rows = exec_result["row_count"]
+    after_rows = len(cleaned_df)
 
-    # ── Gap 6: Persist cleaned data back to disk ──────────
-    if req.persist and exec_result["data"]:
+    # ── Persist cleaned data back to disk ──────────────────
+    if req.persist:
         try:
-            import pandas as _pd
-            cleaned_df = _pd.DataFrame(exec_result["data"])
             filepath = dataset["filepath"]
 
             # Write back to the same file format
@@ -336,6 +359,12 @@ def clean_dataset(
         except Exception:
             pass  # Non-fatal: cleaning result is still returned
 
+    # Build a small preview from the cleaned data
+    import json as _json
+    preview_data = _json.loads(
+        cleaned_df.head(10).fillna("").to_json(orient="records", date_format="iso")
+    )
+
     return {
         "success": True,
         "instruction": req.instruction,
@@ -343,8 +372,8 @@ def clean_dataset(
         "before_rows": before_rows,
         "after_rows": after_rows,
         "rows_removed": before_rows - after_rows,
-        "preview": exec_result["data"][:10],
-        "columns": exec_result["columns"],
+        "preview": preview_data,
+        "columns": list(cleaned_df.columns),
         "persisted": req.persist,
     }
 
