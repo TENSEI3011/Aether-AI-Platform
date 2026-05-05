@@ -120,7 +120,8 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenResponse)
 def login(req: LoginRequest, db: Session = Depends(get_db)):
     """Authenticate user and return JWT access + refresh tokens."""
-    user = db.query(User).filter(User.username == req.username).first()
+    clean_username = req.username.strip()
+    user = db.query(User).filter(User.username == clean_username).first()
     if not user or not verify_password(req.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
