@@ -1,0 +1,53 @@
+# Environment Variables (NEVER commit these)
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Database / Data files
+datasets/
+*.db
+*.sqlite3
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.suo
+*.user
+
+# Docker
+docker-compose.override.yml
+
+# PDF/Word docs (large binary files - optional, remove if you want them)
+*.pdf
+*.docx

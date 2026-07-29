@@ -1,0 +1,42 @@
+# ============================================================
+# Backend Requirements — Generative AI Analysis Platform
+# ============================================================
+
+# Web Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# Database
+sqlalchemy>=2.0.23
+aiosqlite>=0.19.0
+
+# Authentication
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0
+
+# Data Processing
+pandas>=2.2.0
+openpyxl>=3.1.2
+
+# File Upload
+python-multipart>=0.0.6
+
+# Environment Variables
+python-dotenv>=1.0.0
+
+# LLM (Google Gemini — free tier, 15 req/min)
+google-genai>=1.0.0
+
+# LLM (local transformer model — uncomment to use Phi-3)
+# transformers>=4.36.0
+# torch>=2.1.0
+# accelerate>=0.25.0
+
+# Voice (stub — uncomment to use real models)
+# openai-whisper>=20231117
+# pyttsx3>=2.90
+
+# Utilities
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
