@@ -4,6 +4,7 @@ Query Logger — Logs all queries to the database
 ============================================================
 """
 
+from typing import Optional
 from sqlalchemy.orm import Session
 from database.models import QueryLog
 
@@ -12,9 +13,9 @@ def log_query(
     db: Session,
     user_id: int,
     natural_query: str,
-    generated_code: str = None,
+    generated_code: Optional[str] = None,
     is_valid: bool = True,
-    result_summary: str = None,
+    result_summary: Optional[str] = None,
 ) -> QueryLog:
     """Save a query execution record to the database."""
     entry = QueryLog(

@@ -18,6 +18,9 @@ import Dashboard from './pages/Dashboard'
 import Upload from './pages/Upload'
 import Query from './pages/Query'
 import History from './pages/History'
+import Anomalies from './pages/Anomalies'
+import Clustering from './pages/Clustering'
+import Forecast from './pages/Forecast'
 
 function App() {
     return (
@@ -44,6 +47,15 @@ function App() {
                                 } />
                                 <Route path="/history" element={
                                     <ProtectedRoute><History /></ProtectedRoute>
+                                } />
+                                <Route path="/anomalies" element={
+                                    <ProtectedRoute><Anomalies /></ProtectedRoute>
+                                } />
+                                <Route path="/cluster" element={
+                                    <ProtectedRoute><Clustering /></ProtectedRoute>
+                                } />
+                                <Route path="/forecast" element={
+                                    <ProtectedRoute><Forecast /></ProtectedRoute>
                                 } />
 
                                 {/* Default redirect */}

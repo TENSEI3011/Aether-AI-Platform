@@ -9,7 +9,8 @@ Handles user registration (hashed passwords) and login
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+import re as _re
 
 import bcrypt
 
@@ -36,6 +37,31 @@ class RegisterRequest(BaseModel):
     username: str
     email: str
     password: str
+
+    @field_validator("password")
+    @classmethod
+    def password_min_length(cls, v: str) -> str:
+        """SDL-1.1: Enforce minimum password length of 6 characters."""
+        if len(v) < 6:
+            raise ValueError("Password must be at least 6 characters long")
+        return v
+
+    @field_validator("email")
+    @classmethod
+    def email_format(cls, v: str) -> str:
+        """SDL-1.4: Enforce a valid email format using regex."""
+        pattern = r"^[a-zA-Z0-9_.+\-]+@[a-zA-Z0-9\-]+\.[a-zA-Z0-9\-.]+$"
+        if not _re.match(pattern, v):
+            raise ValueError("Invalid email format")
+        return v
+
+    @field_validator("username")
+    @classmethod
+    def username_non_empty(cls, v: str) -> str:
+        """SDL-1.3: Username must not be empty or whitespace-only."""
+        if not v or not v.strip():
+            raise ValueError("Username must not be empty")
+        return v
 
 
 class LoginRequest(BaseModel):

@@ -12,8 +12,12 @@ const API_BASE = import.meta.env.VITE_API_URL || ''
 
 const axiosClient = axios.create({
     baseURL: `${API_BASE}/api`,
-    headers: { 'Content-Type': 'application/json' },
+    // Note: Do NOT set Content-Type globally.
+    // Axios sets it automatically per-request:
+    //   JSON body   → application/json
+    //   FormData    → multipart/form-data  (file uploads)
 })
+
 
 // ── Request interceptor: attach JWT ──────────────────────
 axiosClient.interceptors.request.use((config) => {

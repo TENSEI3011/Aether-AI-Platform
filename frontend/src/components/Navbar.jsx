@@ -25,10 +25,13 @@ function Navbar() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {/* Nav links */}
                     <div className="navbar-links">
-                        <Link to="/dashboard" className={isActive('/dashboard')}>Dashboard</Link>
-                        <Link to="/upload"    className={isActive('/upload')}>Upload</Link>
-                        <Link to="/query"     className={isActive('/query')}>Query</Link>
-                        <Link to="/history"  className={isActive('/history')}>History</Link>
+                        <Link to="/dashboard"  className={isActive('/dashboard')}>Dashboard</Link>
+                        <Link to="/upload"     className={isActive('/upload')}>Upload</Link>
+                        <Link to="/query"      className={isActive('/query')}>Query</Link>
+                        <Link to="/anomalies"  className={isActive('/anomalies')}>Anomalies</Link>
+                        <Link to="/cluster"    className={isActive('/cluster')}>Clustering</Link>
+                        <Link to="/forecast"   className={isActive('/forecast')}>Forecast</Link>
+                        <Link to="/history"    className={isActive('/history')}>History</Link>
                     </div>
 
                     {/* User chip */}

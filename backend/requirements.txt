@@ -28,14 +28,37 @@ python-dotenv>=1.0.0
 # LLM (Google Gemini — free tier, 15 req/min)
 google-genai>=1.0.0
 
-# LLM (local transformer model — uncomment to use Phi-3)
+# ── AI/ML Enhancements ──────────────────────────────────────
+
+# Enhancement 1: Semantic Column Matching
+# ML Concept: Text Embeddings + Cosine Similarity
+# Model: all-MiniLM-L6-v2 (~80MB, runs locally)
+sentence-transformers>=2.7.0
+
+# Enhancement 2: Anomaly Detection + Clustering + Feature Importance
+# ML Concepts: Isolation Forest, K-Means, Random Forest
+scikit-learn>=1.4.0
+
+# Enhancement 3: Whisper STT — Transformer-based ASR
+# DL Concept: Seq2Seq Encoder-Decoder (trained on 680k hours)
+# Replaces Google STT for technical vocab + accent accuracy
+openai-whisper>=20231117
+# Note: Whisper also needs ffmpeg installed on the system
+# Windows: winget install ffmpeg  OR  choco install ffmpeg
+# Linux:   sudo apt install ffmpeg
+
+# Enhancement 4: Time-Series Forecasting
+# ML Concept: Additive regression with trend + seasonality
+# (Uncomment when ready — requires pystan build tools)
+# prophet>=1.1.5
+
+# Enhancement 5: Voice audio format conversion (for Whisper/Google STT)
+pydub>=0.25.1
+
+# ── Optional: Local LLM (uncomment to use Phi-3 instead of Gemini) ──
 # transformers>=4.36.0
 # torch>=2.1.0
 # accelerate>=0.25.0
-
-# Voice (stub — uncomment to use real models)
-# openai-whisper>=20231117
-# pyttsx3>=2.90
 
 # Utilities
 pydantic>=2.5.0

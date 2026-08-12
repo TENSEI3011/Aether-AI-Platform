@@ -9,17 +9,19 @@ Upgraded to use Gemini when GEMINI_API_KEY is available.
 ============================================================
 """
 
-import os
+import logging
 import pandas as pd
 from typing import Dict, Any, List
 
-# ── Use the new google.genai SDK ────────────────────────────────
+logger = logging.getLogger(__name__)
+
 try:
-    from google import genai
     from google.genai import types as genai_types
-    _GEMINI_SDK_AVAILABLE = True
+    _GENAI_TYPES_AVAILABLE = True
 except ImportError:
-    _GEMINI_SDK_AVAILABLE = False
+    _GENAI_TYPES_AVAILABLE = False
+
+from core.config import settings
 
 
 def generate_insights(
@@ -49,23 +51,22 @@ def generate_insights(
             "engine": "none",
         }
 
-    api_key = os.getenv("GEMINI_API_KEY", "").strip()
-    use_gemini = _GEMINI_SDK_AVAILABLE and bool(api_key)
+    # ── Reuse the singleton LLMEngine client (avoids creating a new client per request) ──
+    from llm.llm_engine import llm_engine
+    use_gemini = llm_engine.use_gemini
 
     # ── Also build the statistical highlights (always computed) ──
     statistical = _statistical_insights(data, columns)
 
     if use_gemini:
         try:
-            client = genai.Client(api_key=api_key)
-
             prompt = _build_insight_prompt(natural_query, data, columns)
-            response = client.models.generate_content(
-                model="gemini-1.5-flash",
+            response = llm_engine.client.models.generate_content(
+                model=settings.GEMINI_MODEL,
                 contents=prompt,
                 config=genai_types.GenerateContentConfig(
-                    temperature=0.4,
-                    max_output_tokens=256,
+                    temperature=0.3,       # Slightly lower for more factual insights
+                    max_output_tokens=512, # Doubled: 256 was cutting insights mid-sentence
                 ),
             )
             ai_summary = response.text.strip()
@@ -77,7 +78,7 @@ def generate_insights(
                 "engine": "gemini",
             }
         except Exception as e:
-            print(f"[InsightGenerator] Gemini error: {e} — using statistical fallback")
+            logger.warning("InsightGenerator: Gemini error: %s — using statistical fallback", e)
 
     # ── Statistical fallback ──────────────────────────────
     return {**statistical, "engine": "statistical"}
@@ -88,15 +89,50 @@ def generate_insights(
 # ─────────────────────────────────────────────────────────
 
 def _build_insight_prompt(natural_query: str, data: List[Dict], columns: List[str]) -> str:
-    """Build a concise Gemini prompt for business insights."""
-    sample = data[:8]  # first 8 rows for context
-    return f"""You are a data analyst. A user asked: "{natural_query or 'Analyse this data'}"
+    """Build a concise Gemini prompt using column statistics (not raw rows).
 
-The result has {len(data)} rows and these columns: {columns}
-Sample data (first {len(sample)} rows): {sample}
+    Using aggregated stats instead of raw rows gives Gemini richer signal
+    in fewer tokens: the model can cite real numbers without wading through
+    potentially noisy individual records.
+    """
+    df = pd.DataFrame(data)
+    stats_lines = []
 
-Write 2-3 short, specific business insights in plain English.
-Use actual numbers from the data. Be direct — no fluff, no bullet symbols."""
+    for col in columns:
+        if col not in df.columns:
+            continue
+        series = df[col].dropna()
+        if series.empty:
+            continue
+        if pd.api.types.is_numeric_dtype(series):
+            stats_lines.append(
+                f"  {col} (numeric): min={series.min():.2f}, max={series.max():.2f}, "
+                f"mean={series.mean():.2f}, std={series.std():.2f}"
+            )
+        else:
+            top = series.value_counts().head(3)
+            top_str = ", ".join(f"'{v}' ({c}x)" for v, c in top.items())
+            stats_lines.append(f"  {col} (categorical): top values — {top_str}")
+
+    stats_block = "\n".join(stats_lines) if stats_lines else "(no stats available)"
+
+    return f"""You are a concise data analyst. A user asked: "{natural_query or 'Analyse this data'}"
+
+The query result has {len(data)} rows and {len(columns)} columns.
+Column statistics (use these exact numbers in your response):
+{stats_block}
+
+Write EXACTLY 3 bullet points (each starting with •). Each bullet must:
+  1. Cite at least one specific number from the statistics above
+  2. Be under 35 words
+  3. Be directly relevant to the user's question
+
+Format:
+• [Key finding with a specific number]
+• [Trend or comparison with a specific number]
+• [Actionable insight or recommendation]
+
+Do not include any other text before or after the 3 bullets."""
 
 
 def _statistical_insights(data: List[Dict], columns: List[str]) -> Dict[str, Any]:

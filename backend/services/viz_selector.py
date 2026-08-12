@@ -58,11 +58,15 @@ def select_visualization(
         if pd.api.types.is_numeric_dtype(series):
             numeric_cols.append(col)
         else:
-            # Try datetime
+            # Try datetime with errors='coerce' — never throws, safe on any string
             try:
-                pd.to_datetime(series)
-                datetime_cols.append(col)
-            except (ValueError, TypeError):
+                parsed = pd.to_datetime(series, errors="coerce")
+                parse_rate = parsed.notna().sum() / max(len(series.dropna()), 1)
+                if parse_rate >= 0.80:
+                    datetime_cols.append(col)
+                else:
+                    categorical_cols.append(col)
+            except Exception:
                 categorical_cols.append(col)
 
     # ── Determine axis candidates ─────────────────────────

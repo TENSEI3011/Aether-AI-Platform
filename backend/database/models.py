@@ -34,3 +34,17 @@ class QueryLog(Base):
     is_valid = Column(Integer, default=1)                   # 1 = passed validation
     result_summary = Column(Text, nullable=True)            # JSON string of result
     created_at = Column(DateTime, server_default=func.now())
+
+
+class Dataset(Base):
+    """Persisted metadata for every uploaded dataset."""
+    __tablename__ = "datasets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    filename = Column(String(255), nullable=False)           # Original filename
+    filepath = Column(Text, nullable=False)                  # Absolute path on disk
+    schema_json = Column(Text, nullable=True)                # JSON-encoded schema dict
+    schema_summary = Column(Text, nullable=True)             # Human-readable schema summary
+    profile_json = Column(Text, nullable=True)               # JSON-encoded data profile
+    created_at = Column(DateTime, server_default=func.now())

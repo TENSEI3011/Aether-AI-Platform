@@ -7,9 +7,7 @@ import axiosClient from './axiosClient'
 export async function uploadDataset(file) {
     const formData = new FormData()
     formData.append('file', file)
-    const res = await axiosClient.post('/datasets/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    })
+    const res = await axiosClient.post('/datasets/upload', formData)
     return res.data
 }
 

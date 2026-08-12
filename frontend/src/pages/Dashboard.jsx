@@ -86,7 +86,7 @@ function Dashboard() {
             </div>
 
             {/* ── Quick Actions ── */}
-            <div className="grid-3" style={{ marginBottom: 'var(--space-xl)' }}>
+            <div className="grid-3" style={{ marginBottom: 'var(--space-md)' }}>
                 <Link to="/upload" className="card action-card" style={{ color: 'inherit' }}>
                     <div className="action-icon">📁</div>
                     <div className="action-label">Upload Dataset</div>
@@ -106,6 +106,31 @@ function Dashboard() {
                     <div className="action-label">Query History</div>
                     <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
                         Last 50 queries
+                    </span>
+                </Link>
+            </div>
+
+            {/* ── ML Tools Row ── */}
+            <div className="grid-3" style={{ marginBottom: 'var(--space-xl)' }}>
+                <Link to="/anomalies" className="card action-card" style={{ color: 'inherit' }}>
+                    <div className="action-icon" style={{ background: 'rgba(231,76,60,0.1)', border: '1px solid rgba(231,76,60,0.25)' }}>🚨</div>
+                    <div className="action-label">Anomaly Detection</div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                        Isolation Forest ML
+                    </span>
+                </Link>
+                <Link to="/cluster" className="card action-card" style={{ color: 'inherit' }}>
+                    <div className="action-icon" style={{ background: 'rgba(241,196,15,0.1)', border: '1px solid rgba(241,196,15,0.25)' }}>🎯</div>
+                    <div className="action-label">K-Means Clustering</div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                        Elbow method auto-K
+                    </span>
+                </Link>
+                <Link to="/forecast" className="card action-card" style={{ color: 'inherit' }}>
+                    <div className="action-icon" style={{ background: 'rgba(46,204,113,0.1)', border: '1px solid rgba(46,204,113,0.25)' }}>📈</div>
+                    <div className="action-label">Time-Series Forecast</div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                        Prophet AI model
                     </span>
                 </Link>
             </div>

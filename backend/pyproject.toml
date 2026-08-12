@@ -1,0 +1,26 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",                  # verbose output
+    "--tb=short",          # short tracebacks
+    "--color=yes",         # colored output
+    "-p", "no:warnings",   # suppress deprecation warnings
+]
+
+# ── Markers ───────────────────────────────────────────────
+# Used to selectively run phases:
+#   pytest -m phase1       → data pipeline only
+#   pytest -m ml           → ML services only
+#   pytest -m integration  → API tests only
+markers = [
+    "phase1: Data pipeline tests (file loading, profiling, schema)",
+    "phase2: ML service tests (anomaly, clustering, forecasting)",
+    "phase3: Query pipeline tests (validator, executor, semantic)",
+    "phase4: API integration tests (FastAPI endpoints)",
+    "phase5: Prompt engineering & LLM quality tests (templates, stub, memory)",
+    "phase6: Output quality & E2E pipeline tests (viz, insights, full pipeline)",
+    "slow: Tests that take > 5 seconds",
+]
