@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     LLM_MODEL_PATH: str = "microsoft/Phi-3-mini-4k-instruct"
     LLM_DEVICE: str = "cpu"
     GEMINI_API_KEY: str = ""  # Google Gemini API key (get free at aistudio.google.com)
-    GEMINI_MODEL: str = "gemini-3.5-flash"  # Updated: gemini-2.0-flash was deprecated
+    GEMINI_MODEL: str = "gemini-2.5-flash"  # ✅ Correct model name (gemini-3.5-flash does NOT exist)
 
     # ── Voice ──────────────────────────────────────────────
     WHISPER_MODEL: str = "base"

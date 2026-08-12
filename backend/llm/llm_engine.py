@@ -25,11 +25,22 @@ IMPORTANT:
 
 import os
 import re
+import hashlib
 import logging
+from datetime import date
 from typing import Dict, Any, List, Optional
 from collections import deque
 
 logger = logging.getLogger(__name__)
+
+# ── Response cache (saves API calls for duplicate queries) ────
+# Key: sha256(query + schema), Value: last API response dict
+_RESPONSE_CACHE: Dict[str, Dict[str, Any]] = {}
+_CACHE_MAX_SIZE = 200  # evict oldest when full
+
+# ── Daily quota tracker ───────────────────────────────────────
+_daily_quota: Dict[str, int] = {}  # {"YYYY-MM-DD": count}
+_DAILY_LIMIT = 19  # stay 1 below hard limit (20) for safety
 
 # -- Use the new google.genai SDK (replaces deprecated google.generativeai) --
 try:
@@ -66,14 +77,16 @@ class LLMEngine:
     """
     LLM integration for natural-language to Pandas code generation.
 
-    Uses Google Gemini 3.5 Flash when GEMINI_API_KEY is set in .env.
+    Uses Google Gemini 2.5 Flash when GEMINI_API_KEY is set in .env.
     Falls back to keyword-matching stub when no key is available.
 
-    Supports conversation memory (ICL) and self-correction.
+    Supports conversation memory (ICL), self-correction, and response
+    caching to preserve the free-tier daily quota (20 req/day).
     """
 
     def __init__(self, memory_size: int = 5):
         self.api_key = os.getenv("GEMINI_API_KEY", "").strip()
+
         self.use_gemini = _GEMINI_SDK_AVAILABLE and bool(self.api_key)
         self.is_stub = not self.use_gemini
 
@@ -85,7 +98,12 @@ class LLMEngine:
 
         if self.use_gemini:
             self.client = genai.Client(api_key=self.api_key)
-            logger.info("LLMEngine: %s loaded — real AI active", settings.GEMINI_MODEL)
+            logger.info(
+                "LLMEngine: %s loaded — real AI active | today's quota used: %d/%d",
+                settings.GEMINI_MODEL,
+                self._quota_used_today(),
+                _DAILY_LIMIT,
+            )
             if _SEMANTIC_AVAILABLE:
                 logger.info("LLMEngine: Semantic column matching enabled")
         else:
@@ -93,7 +111,55 @@ class LLMEngine:
             if not _GEMINI_SDK_AVAILABLE:
                 logger.warning("LLMEngine: google-genai not installed — using stub")
             else:
-                logger.warning("LLMEngine: GEMINI_API_KEY not set — using stub fallback")
+                logger.warning("LLMEngine: GEMINI_API_KEY not set or invalid — using stub fallback")
+
+    # ---------------------------------------------------------
+    # Quota & Cache Helpers
+    # ---------------------------------------------------------
+
+    @staticmethod
+    def _quota_used_today() -> int:
+        """Return how many real Gemini calls were made today."""
+        today = str(date.today())
+        return _daily_quota.get(today, 0)
+
+    @staticmethod
+    def _quota_exceeded() -> bool:
+        today = str(date.today())
+        return _daily_quota.get(today, 0) >= _DAILY_LIMIT
+
+    @staticmethod
+    def _increment_quota() -> None:
+        today = str(date.today())
+        _daily_quota[today] = _daily_quota.get(today, 0) + 1
+        logger.info(
+            "LLMEngine: Gemini API call #%d today (limit %d)",
+            _daily_quota[today],
+            _DAILY_LIMIT,
+        )
+
+    @staticmethod
+    def _cache_key(query: str, schema: str) -> str:
+        return hashlib.sha256(f"{query}|{schema}".encode()).hexdigest()
+
+    @staticmethod
+    def _get_cached(cache_key: str) -> Optional[Dict[str, Any]]:
+        hit = _RESPONSE_CACHE.get(cache_key)
+        if hit:
+            logger.info("LLMEngine: Cache HIT — skipping API call (quota preserved)")
+            cached = dict(hit)  # shallow copy
+            cached["engine"] += " (cached)"
+            return cached
+        return None
+
+    @staticmethod
+    def _store_cache(cache_key: str, result: Dict[str, Any]) -> None:
+        global _RESPONSE_CACHE
+        if len(_RESPONSE_CACHE) >= _CACHE_MAX_SIZE:
+            # evict the oldest entry
+            oldest = next(iter(_RESPONSE_CACHE))
+            del _RESPONSE_CACHE[oldest]
+        _RESPONSE_CACHE[cache_key] = dict(result)
 
     # ---------------------------------------------------------
     # Public API
@@ -134,9 +200,25 @@ class LLMEngine:
                 logger.warning("LLMEngine: Semantic enrichment failed: %s", e)
 
         if self.use_gemini:
-            result = self._gemini_generate(
-                natural_query, enriched_schema, session_id
-            )
+            # ── Check response cache first (saves daily quota) ────
+            ck = self._cache_key(natural_query, enriched_schema)
+            cached = self._get_cached(ck)
+            if cached:
+                result = cached
+            elif self._quota_exceeded():
+                logger.warning(
+                    "LLMEngine: Daily Gemini quota (%d) reached — using stub fallback",
+                    _DAILY_LIMIT,
+                )
+                result = self._stub_generate(natural_query, enriched_schema)
+                result["explanation"] = (
+                    f"Daily Gemini quota ({_DAILY_LIMIT} calls) reached. "
+                    "Using keyword-stub. Quota resets at midnight."
+                )
+            else:
+                result = self._gemini_generate(natural_query, enriched_schema, session_id)
+                if result.get("engine", "").endswith("-correction") is False and result.get("engine") != "stub-fallback":
+                    self._store_cache(ck, result)
         else:
             result = self._stub_generate(natural_query, enriched_schema)
 
@@ -263,6 +345,7 @@ class LLMEngine:
         )
 
         try:
+            self._increment_quota()  # track before call
             response = self.client.models.generate_content(
                 model=settings.GEMINI_MODEL,
                 contents=prompt,
@@ -301,6 +384,23 @@ class LLMEngine:
             result["explanation"] = f"Gemini unavailable, used fallback. ({e})"
             result["engine"] = "stub-fallback"
             return result
+
+    # ---------------------------------------------------------
+    # Public status endpoint (for debugging / UI display)
+    # ---------------------------------------------------------
+
+    def get_status(self) -> Dict[str, Any]:
+        """Return current engine status including quota and cache stats."""
+        return {
+            "engine": "gemini" if self.use_gemini else "keyword-stub",
+            "model": settings.GEMINI_MODEL if self.use_gemini else "N/A",
+            "api_key_set": bool(self.api_key),
+            "quota_used_today": self._quota_used_today(),
+            "quota_limit": _DAILY_LIMIT,
+            "quota_remaining": max(0, _DAILY_LIMIT - self._quota_used_today()),
+            "cache_size": len(_RESPONSE_CACHE),
+            "cache_max": _CACHE_MAX_SIZE,
+        }
 
     # ---------------------------------------------------------
     # Memory Management

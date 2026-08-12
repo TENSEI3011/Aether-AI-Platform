@@ -59,3 +59,16 @@ app.include_router(voice_router,    prefix="/api/voice",    tags=["Voice"])
 def root():
     """Health-check endpoint."""
     return {"status": "ok", "message": "Generative AI Analysis Platform is running"}
+
+
+@app.get("/api/llm-status", tags=["Root"])
+def llm_status():
+    """
+    Returns the current AI engine status:
+    - whether Gemini or the keyword-stub is active
+    - the model name being used
+    - today's Gemini API call count vs the daily limit
+    - response cache stats
+    """
+    from llm.llm_engine import llm_engine
+    return llm_engine.get_status()
