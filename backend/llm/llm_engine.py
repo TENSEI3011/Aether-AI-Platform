@@ -348,162 +348,211 @@ class LLMEngine:
         code = None
         explanation = None
 
-        if any(kw in query_lower for kw in ["average", "mean", "avg"]):
-            if any(kw in query_lower for kw in ["by", "per", "each", "group"]) and cat and num:
-                code = f"df.groupby('{cat}')['{num}'].mean().reset_index()"
-                explanation = f"Average of '{num}' grouped by '{cat}'"
-            elif num:
-                code = f"df['{num}'].mean()"
-                explanation = f"Overall average of '{num}'"
-            else:
+        # ── Geography / country filter (must be checked FIRST before generic keywords) ──
+        # Maps adjective/noun → (country_name, [known cities])
+        _GEO_FILTERS = {
+            "indian":    ("India",   ["Mumbai", "Delhi", "Bangalore", "Chennai", "Kolkata",
+                                      "Hyderabad", "Pune", "Ahmedabad", "Jaipur", "Lucknow",
+                                      "Surat", "Kanpur", "Nagpur", "Visakhapatnam", "Bhopal",
+                                      "Patna", "Vadodara", "Indore", "Coimbatore", "Kochi",
+                                      "Guwahati", "Chandigarh", "Srinagar", "Mysore", "Agra",
+                                      "Nashik", "Varanasi", "Rajkot", "Amritsar", "Vijayawada"]),
+            "india":     ("India",   ["Mumbai", "Delhi", "Bangalore", "Chennai", "Kolkata",
+                                      "Hyderabad", "Pune", "Ahmedabad", "Jaipur", "Lucknow",
+                                      "Surat", "Kanpur", "Nagpur", "Visakhapatnam", "Bhopal",
+                                      "Patna", "Vadodara", "Indore", "Coimbatore", "Kochi"]),
+            "american":  ("United States", ["New York", "Los Angeles", "Chicago", "Houston",
+                                             "Phoenix", "Philadelphia", "San Antonio", "San Diego",
+                                             "Dallas", "San Jose", "Austin", "Jacksonville"]),
+            "us":        ("United States", ["New York", "Los Angeles", "Chicago", "Houston",
+                                             "Phoenix", "Philadelphia", "San Antonio", "San Diego"]),
+            "chinese":   ("China",  ["Shanghai", "Beijing", "Guangzhou", "Shenzhen", "Chengdu",
+                                      "Tianjin", "Wuhan", "Chongqing", "Nanjing", "Xi'an"]),
+            "china":     ("China",  ["Shanghai", "Beijing", "Guangzhou", "Shenzhen", "Chengdu",
+                                      "Tianjin", "Wuhan", "Chongqing", "Nanjing", "Xi'an"]),
+            "japanese":  ("Japan",  ["Tokyo", "Osaka", "Yokohama", "Nagoya", "Sapporo",
+                                      "Kobe", "Kyoto", "Fukuoka", "Kawasaki", "Saitama"]),
+            "japan":     ("Japan",  ["Tokyo", "Osaka", "Yokohama", "Nagoya", "Sapporo",
+                                      "Kobe", "Kyoto", "Fukuoka", "Kawasaki", "Saitama"]),
+            "brazilian": ("Brazil", ["S\u00e3o Paulo", "Rio de Janeiro", "Belo Horizonte",
+                                      "Bras\u00edlia", "Fortaleza", "Salvador", "Manaus", "Curitiba"]),
+            "brazil":    ("Brazil", ["S\u00e3o Paulo", "Rio de Janeiro", "Belo Horizonte",
+                                      "Bras\u00edlia", "Fortaleza", "Salvador", "Manaus", "Curitiba"]),
+        }
+
+        for geo_kw, (country_name, city_list) in _GEO_FILTERS.items():
+            if geo_kw in query_lower:
+                # Check if there is a 'country' column — prefer direct equality filter
+                if "country" in [c.lower() for c in categorical_cols]:
+                    country_col = next(c for c in categorical_cols if c.lower() == "country")
+                    code = f"df[df['{country_col}'].str.lower() == '{country_name.lower()}']"
+                    explanation = f"Rows where country is '{country_name}'"
+                elif cat:  # Use .isin() on the first categorical column (likely 'city')
+                    cities_repr = repr(city_list)
+                    code = f"df[df['{cat}'].isin({cities_repr})]"
+                    explanation = f"Filtered to known {country_name} cities"
+                else:
+                    code = "df.describe()"
+                    explanation = f"No city/country column found to filter {country_name}"
+                break  # Stop after first match
+
+        # ── Keyword matching (only runs if geography filter didn't already set code) ──
+        if code is None:
+            if any(kw in query_lower for kw in ["average", "mean", "avg"]):
+                if any(kw in query_lower for kw in ["by", "per", "each", "group"]) and cat and num:
+                    code = f"df.groupby('{cat}')['{num}'].mean().reset_index()"
+                    explanation = f"Average of '{num}' grouped by '{cat}'"
+                elif num:
+                    code = f"df['{num}'].mean()"
+                    explanation = f"Overall average of '{num}'"
+                else:
+                    code = "df.describe()"
+                    explanation = "Descriptive statistics"
+
+            elif any(kw in query_lower for kw in ["sum", "total"]):
+                if any(kw in query_lower for kw in ["by", "per", "each", "group"]) and cat and num:
+                    code = f"df.groupby('{cat}')['{num}'].sum().reset_index()"
+                    explanation = f"Total '{num}' by '{cat}'"
+                elif num:
+                    code = f"df['{num}'].sum()"
+                    explanation = f"Sum of '{num}'"
+                else:
+                    code = "df.describe()"
+                    explanation = "Descriptive statistics"
+
+            elif any(kw in query_lower for kw in ["count", "how many"]):
+                if cat:
+                    code = f"df['{cat}'].value_counts().reset_index()"
+                    explanation = f"Count of each '{cat}'"
+                else:
+                    code = "df.shape[0]"
+                    explanation = "Total row count"
+
+            elif any(kw in query_lower for kw in ["max", "maximum", "highest", "top", "largest", "best"]):
+                if cat and num:
+                    code = f"df.groupby('{cat}')['{num}'].max().reset_index().nlargest(10, '{num}')"
+                    explanation = f"Max '{num}' by '{cat}'"
+                elif num:
+                    code = f"df.nlargest(10, '{num}')"
+                    explanation = f"Top 10 rows by '{num}'"
+                else:
+                    code = "df.head(10)"
+                    explanation = "Top 10 rows"
+
+            elif any(kw in query_lower for kw in ["min", "minimum", "lowest", "bottom", "smallest", "worst"]):
+                if cat and num:
+                    code = f"df.groupby('{cat}')['{num}'].min().reset_index().nsmallest(10, '{num}')"
+                    explanation = f"Min '{num}' by '{cat}'"
+                elif num:
+                    code = f"df.nsmallest(10, '{num}')"
+                    explanation = f"Bottom 10 rows by '{num}'"
+                else:
+                    code = "df.head(10)"
+                    explanation = "Bottom rows"
+
+            elif any(kw in query_lower for kw in ["anomal", "outlier", "unusual", "weird"]):
+                if num:
+                    code = f"df[((df['{num}'] - df['{num}'].mean()) / df['{num}'].std()).abs() > 2]"
+                    explanation = f"Rows where '{num}' is more than 2 standard deviations from the mean"
+                else:
+                    code = "df.describe()"
+                    explanation = "Descriptive statistics for anomaly overview"
+
+            elif any(kw in query_lower for kw in ["forecast", "predict", "future", "trend"]):
+                if datetime_cols and num:
+                    dt = datetime_cols[0]
+                    code = f"df.groupby('{dt}')['{num}'].mean().reset_index()"
+                    explanation = f"Trend of '{num}' over '{dt}' (use forecast endpoint for predictions)"
+                elif num and cat:
+                    code = f"df.groupby('{cat}')['{num}'].mean().reset_index()"
+                    explanation = f"'{num}' across '{cat}'"
+                else:
+                    code = "df.head(20)"
+                    explanation = "Dataset preview"
+
+            elif any(kw in query_lower for kw in ["cluster", "group", "segment"]):
+                if num:
+                    code = f"df.groupby('{cat}')['{num}'].agg(['mean', 'count']).reset_index()" if cat else f"df['{num}'].describe()"
+                    explanation = "Grouped statistics for clustering context (use cluster endpoint for K-Means)"
+                else:
+                    code = "df.describe()"
+                    explanation = "Descriptive statistics"
+
+            elif any(kw in query_lower for kw in ["describe", "summary", "statistics", "stats", "overview"]):
                 code = "df.describe()"
-                explanation = "Descriptive statistics"
+                explanation = "Descriptive statistics for all numeric columns"
 
-        elif any(kw in query_lower for kw in ["sum", "total"]):
-            if any(kw in query_lower for kw in ["by", "per", "each", "group"]) and cat and num:
-                code = f"df.groupby('{cat}')['{num}'].sum().reset_index()"
-                explanation = f"Total '{num}' by '{cat}'"
-            elif num:
-                code = f"df['{num}'].sum()"
-                explanation = f"Sum of '{num}'"
+            elif any(kw in query_lower for kw in ["distribution", "spread", "breakdown"]):
+                if cat:
+                    code = f"df['{cat}'].value_counts().reset_index()"
+                    explanation = f"Distribution of '{cat}'"
+                elif num:
+                    code = f"df['{num}'].describe()"
+                    explanation = f"Distribution of '{num}'"
+                else:
+                    code = "df.describe()"
+                    explanation = "Distribution of all columns"
+
+            elif any(kw in query_lower for kw in ["correlation", "correlate", "relationship"]):
+                code = "df.corr(numeric_only=True)"
+                explanation = "Correlation matrix"
+
+            elif any(kw in query_lower for kw in ["trend", "over time", "timeline", "time series"]):
+                if datetime_cols and num:
+                    dt = datetime_cols[0]
+                    code = f"df.groupby('{dt}')['{num}'].mean().reset_index()"
+                    explanation = f"Trend of '{num}' over '{dt}'"
+                elif num and cat:
+                    code = f"df.groupby('{cat}')['{num}'].mean().reset_index()"
+                    explanation = f"'{num}' across '{cat}'"
+                else:
+                    code = "df.head(20)"
+                    explanation = "Dataset preview"
+
+            elif any(kw in query_lower for kw in ["compare", "comparison", "versus", "vs"]):
+                if cat and num:
+                    code = f"df.groupby('{cat}')['{num}'].mean().reset_index()"
+                    explanation = f"Comparison of '{num}' across '{cat}'"
+                else:
+                    code = "df.describe()"
+                    explanation = "Comparison statistics"
+
+            elif any(kw in query_lower for kw in ["unique", "distinct"]):
+                if cat:
+                    code = f"df['{cat}'].unique().tolist()"
+                    explanation = f"Unique values in '{cat}'"
+                else:
+                    code = "df.nunique()"
+                    explanation = "Unique count per column"
+
+            elif any(kw in query_lower for kw in ["missing", "null", "empty", "na"]):
+                code = "df.isnull().sum().reset_index().rename(columns={'index': 'column', 0: 'missing_count'})"
+                explanation = "Missing value count per column"
+
+            elif any(kw in query_lower for kw in ["show", "display", "list", "view", "see", "give", "filter", "only", "where"]):
+                if any(kw in query_lower for kw in ["all", "everything", "full"]):
+                    code = "df.head(50)"
+                    explanation = "First 50 rows"
+                elif cat and num:
+                    code = f"df.groupby('{cat}')['{num}'].mean().reset_index()"
+                    explanation = f"'{num}' by '{cat}'"
+                else:
+                    code = "df.head(20)"
+                    explanation = "First 20 rows"
+
             else:
-                code = "df.describe()"
-                explanation = "Descriptive statistics"
-
-        elif any(kw in query_lower for kw in ["count", "how many"]):
-            if cat:
-                code = f"df['{cat}'].value_counts().reset_index()"
-                explanation = f"Count of each '{cat}'"
-            else:
-                code = "df.shape[0]"
-                explanation = "Total row count"
-
-        elif any(kw in query_lower for kw in ["max", "maximum", "highest", "top", "largest", "best"]):
-            if cat and num:
-                code = f"df.groupby('{cat}')['{num}'].max().reset_index().nlargest(10, '{num}')"
-                explanation = f"Max '{num}' by '{cat}'"
-            elif num:
-                code = f"df.nlargest(10, '{num}')"
-                explanation = f"Top 10 rows by '{num}'"
-            else:
-                code = "df.head(10)"
-                explanation = "Top 10 rows"
-
-        elif any(kw in query_lower for kw in ["min", "minimum", "lowest", "bottom", "smallest", "worst"]):
-            if cat and num:
-                code = f"df.groupby('{cat}')['{num}'].min().reset_index().nsmallest(10, '{num}')"
-                explanation = f"Min '{num}' by '{cat}'"
-            elif num:
-                code = f"df.nsmallest(10, '{num}')"
-                explanation = f"Bottom 10 rows by '{num}'"
-            else:
-                code = "df.head(10)"
-                explanation = "Bottom rows"
-
-        elif any(kw in query_lower for kw in ["anomal", "outlier", "unusual", "weird"]):
-            if num:
-                # Z-score based anomaly detection in stub mode
-                code = f"df[((df['{num}'] - df['{num}'].mean()) / df['{num}'].std()).abs() > 2]"
-                explanation = f"Rows where '{num}' is more than 2 standard deviations from the mean"
-            else:
-                code = "df.describe()"
-                explanation = "Descriptive statistics for anomaly overview"
-
-        elif any(kw in query_lower for kw in ["forecast", "predict", "future", "trend"]):
-            if datetime_cols and num:
-                dt = datetime_cols[0]
-                code = f"df.groupby('{dt}')['{num}'].mean().reset_index()"
-                explanation = f"Trend of '{num}' over '{dt}' (use forecast endpoint for predictions)"
-            elif num and cat:
-                code = f"df.groupby('{cat}')['{num}'].mean().reset_index()"
-                explanation = f"'{num}' across '{cat}'"
-            else:
-                code = "df.head(20)"
-                explanation = "Dataset preview"
-
-        elif any(kw in query_lower for kw in ["cluster", "group", "segment"]):
-            if num:
-                code = f"df.groupby('{cat}')['{num}'].agg(['mean', 'count']).reset_index()" if cat else f"df['{num}'].describe()"
-                explanation = f"Grouped statistics for clustering context (use cluster endpoint for K-Means)"
-            else:
-                code = "df.describe()"
-                explanation = "Descriptive statistics"
-
-        elif any(kw in query_lower for kw in ["describe", "summary", "statistics", "stats", "overview"]):
-            code = "df.describe()"
-            explanation = "Descriptive statistics for all numeric columns"
-
-        elif any(kw in query_lower for kw in ["distribution", "spread", "breakdown"]):
-            if cat:
-                code = f"df['{cat}'].value_counts().reset_index()"
-                explanation = f"Distribution of '{cat}'"
-            elif num:
-                code = f"df['{num}'].describe()"
-                explanation = f"Distribution of '{num}'"
-            else:
-                code = "df.describe()"
-                explanation = "Distribution of all columns"
-
-        elif any(kw in query_lower for kw in ["correlation", "correlate", "relationship"]):
-            code = "df.corr(numeric_only=True)"
-            explanation = "Correlation matrix"
-
-        elif any(kw in query_lower for kw in ["trend", "over time", "timeline", "time series"]):
-            if datetime_cols and num:
-                dt = datetime_cols[0]
-                code = f"df.groupby('{dt}')['{num}'].mean().reset_index()"
-                explanation = f"Trend of '{num}' over '{dt}'"
-            elif num and cat:
-                code = f"df.groupby('{cat}')['{num}'].mean().reset_index()"
-                explanation = f"'{num}' across '{cat}'"
-            else:
-                code = "df.head(20)"
-                explanation = "Dataset preview"
-
-        elif any(kw in query_lower for kw in ["compare", "comparison", "versus", "vs"]):
-            if cat and num:
-                code = f"df.groupby('{cat}')['{num}'].mean().reset_index()"
-                explanation = f"Comparison of '{num}' across '{cat}'"
-            else:
-                code = "df.describe()"
-                explanation = "Comparison statistics"
-
-        elif any(kw in query_lower for kw in ["unique", "distinct"]):
-            if cat:
-                code = f"df['{cat}'].unique().tolist()"
-                explanation = f"Unique values in '{cat}'"
-            else:
-                code = "df.nunique()"
-                explanation = "Unique count per column"
-
-        elif any(kw in query_lower for kw in ["missing", "null", "empty", "na"]):
-            code = "df.isnull().sum().reset_index().rename(columns={'index': 'column', 0: 'missing_count'})"
-            explanation = "Missing value count per column"
-
-        elif any(kw in query_lower for kw in ["show", "display", "list", "view", "see", "give"]):
-            if any(kw in query_lower for kw in ["all", "everything", "full"]):
-                code = "df.head(50)"
-                explanation = "First 50 rows"
-            elif cat and num:
-                code = f"df.groupby('{cat}')['{num}'].mean().reset_index()"
-                explanation = f"'{num}' by '{cat}'"
-            else:
-                code = "df.head(20)"
-                explanation = "First 20 rows"
-
-        else:
-            if mentioned_numeric and mentioned_categorical:
-                code = f"df.groupby('{mentioned_categorical}')['{mentioned_numeric}'].mean().reset_index()"
-                explanation = f"Average '{mentioned_numeric}' by '{mentioned_categorical}'"
-            elif mentioned_categorical:
-                code = f"df['{mentioned_categorical}'].value_counts().reset_index()"
-                explanation = f"Distribution of '{mentioned_categorical}'"
-            elif mentioned_numeric:
-                code = f"df['{mentioned_numeric}'].describe()"
-                explanation = f"Statistics for '{mentioned_numeric}'"
-            else:
-                code = "df.head(10)"
-                explanation = "Dataset preview"
+                if mentioned_numeric and mentioned_categorical:
+                    code = f"df.groupby('{mentioned_categorical}')['{mentioned_numeric}'].mean().reset_index()"
+                    explanation = f"Average '{mentioned_numeric}' by '{mentioned_categorical}'"
+                elif mentioned_categorical:
+                    code = f"df['{mentioned_categorical}'].value_counts().reset_index()"
+                    explanation = f"Distribution of '{mentioned_categorical}'"
+                elif mentioned_numeric:
+                    code = f"df['{mentioned_numeric}'].describe()"
+                    explanation = f"Statistics for '{mentioned_numeric}'"
+                else:
+                    code = "df.head(10)"
+                    explanation = "Dataset preview"
 
         return {
             "code": code,

@@ -17,7 +17,7 @@ ENHANCED:
 """
 
 
-# ── 8 diverse few-shot examples covering the most common query patterns ──
+# ── 12 diverse few-shot examples covering the most common query patterns ──
 # LLMs are highly sensitive to example quality and coverage.
 # More patterns = fewer hallucinated column names and wrong aggregations.
 _FEW_SHOT_EXAMPLES = """
@@ -54,6 +54,22 @@ Example 7 — Multi-column aggregation:
 Example 8 — Filter out nulls and correlate:
   Question: "What is the correlation between age and income?"
   Code: df[['age', 'income']].dropna().corr()
+
+Example 9 — Filter by known geographic values (IMPORTANT: use .isin() when no country column exists):
+  Question: "Show only Indian cities"
+  Code: df[df['city'].isin(['Mumbai', 'Delhi', 'Bangalore', 'Chennai', 'Kolkata', 'Hyderabad', 'Pune', 'Ahmedabad', 'Jaipur', 'Lucknow', 'Surat', 'Kanpur', 'Nagpur', 'Visakhapatnam', 'Bhopal', 'Patna', 'Vadodara', 'Indore', 'Coimbatore', 'Kochi', 'Guwahati', 'Chandigarh', 'Srinagar', 'Mysore', 'Agra', 'Nashik', 'Varanasi', 'Rajkot', 'Amritsar', 'Vijayawada'])]
+
+Example 10 — Filter by country column when it exists:
+  Question: "Show only rows from India"
+  Code: df[df['country'].str.lower() == 'india']
+
+Example 11 — Filter with string contains (partial match):
+  Question: "Show cities that contain 'pur'"
+  Code: df[df['city'].str.contains('pur', case=False, na=False)]
+
+Example 12 — Filter using 'only' / 'where' / 'filter' keyword:
+  Question: "Show only rows where population > 1000000"
+  Code: df[df['population'] > 1000000]
 """.strip()
 
 
@@ -86,6 +102,7 @@ RULES:
 6. If the question is a follow-up (e.g. "now filter only X"), use the conversation history to understand context
 7. Use the numeric ranges in the schema to generate correct filter thresholds
 8. Use the top_values listed for categorical columns when filtering by category name
+9. CRITICAL — Geographic filters: If the user asks to filter by country/nationality (e.g. 'Indian cities', 'US cities') and there is NO country column, use .isin() on the city column with known city names from that country (see Example 9). If a country column EXISTS, filter on it directly (see Example 10).
 {history_block}
 {_FEW_SHOT_EXAMPLES}
 
