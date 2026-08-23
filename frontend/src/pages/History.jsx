@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * History Page — InsightAI scrollable query log with badges
+ * History Page — Aether AI scrollable query log with badges
  * ============================================================
  * All logic preserved: getQueryHistory() API, formatDate()
  * ============================================================

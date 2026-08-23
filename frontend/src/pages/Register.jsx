@@ -1,5 +1,5 @@
 /**
- * Register Page — InsightAI split-layout with feature pills
+ * Register Page — Aether AI split-layout with feature pills
  * Logic preserved: register() from AuthContext → navigate('/dashboard')
  */
 
@@ -155,7 +155,7 @@ function Register() {
                 <div className="glass-panel auth-card">
                     <div className="auth-logo-row">
                         <div className="auth-logo-icon">✦</div>
-                        <div className="auth-logo-name">InsightAI</div>
+                        <div className="auth-logo-name">Aether AI</div>
                     </div>
 
                     {error && (

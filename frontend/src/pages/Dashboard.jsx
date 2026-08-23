@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * Dashboard — InsightAI glassmorphic analytics workspace
+ * Dashboard — Aether AI glassmorphic analytics workspace
  * ============================================================
  * All logic preserved: DashboardContext, KPI calcs, filter,
  * ChartRenderer, InsightDisplay, removePanel, clearPanels

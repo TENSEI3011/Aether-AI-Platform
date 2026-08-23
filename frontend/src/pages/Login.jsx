@@ -1,5 +1,5 @@
 /**
- * Login Page — InsightAI split-layout with WebGL shader hero
+ * Login Page — Aether AI split-layout with WebGL shader hero
  * Logic preserved: login() from AuthContext → navigate('/dashboard')
  */
 
@@ -146,7 +146,7 @@ function Login() {
                     {/* Logo */}
                     <div className="auth-logo-row">
                         <div className="auth-logo-icon">✦</div>
-                        <div className="auth-logo-name">InsightAI</div>
+                        <div className="auth-logo-name">Aether AI</div>
                     </div>
 
                     {/* Error */}

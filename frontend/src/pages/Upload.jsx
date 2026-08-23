@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * Upload Page — InsightAI glowing drag-and-drop with schema cards
+ * Upload Page — Aether AI glowing drag-and-drop with schema cards
  * ============================================================
  * All API logic preserved: uploadDataset(), profile, schema display
  * ============================================================

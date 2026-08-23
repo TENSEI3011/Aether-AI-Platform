@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * Navbar — InsightAI glassmorphic sticky navigation bar
+ * Navbar — Aether AI glassmorphic sticky navigation bar
  * ============================================================
  */
 
@@ -18,7 +18,7 @@ function Navbar() {
         <nav className="navbar">
             {/* Brand */}
             <Link to="/dashboard" className="navbar-brand">
-                ✦ InsightAI
+                ✦ Aether AI
             </Link>
 
             {user ? (

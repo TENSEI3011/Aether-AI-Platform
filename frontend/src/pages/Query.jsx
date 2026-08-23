@@ -1,6 +1,6 @@
 /**
  * ============================================================
- * Query Page — InsightAI 3-column results layout
+ * Query Page — Aether AI 3-column results layout
  * ============================================================
  * All logic preserved:
  *   - queryKey counter for ChartRenderer remount
